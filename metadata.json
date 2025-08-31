@@ -1,0 +1,5 @@
+{
+  "name": "AI Answer Sheet Evaluator",
+  "description": "An expert AI evaluator for university-level exams. It analyzes student answers against questions and optional model answers to provide detailed feedback, marks, and suggestions for improvement.",
+  "requestFramePermissions": []
+}
