@@ -1,13 +1,11 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import { PdfContent } from './pdfService';
 
-if (!process.env.API_KEY) {
-  // This is a placeholder check. In a real environment, the key would be set.
-  // For this sandboxed environment, we proceed assuming it's available.
-  console.warn("API_KEY environment variable not set. The application will not function without it.");
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY environment variable not set.");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const generatePromptForPdfs = (
   questionPaperText: string,
