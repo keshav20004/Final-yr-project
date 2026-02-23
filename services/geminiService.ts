@@ -1,11 +1,18 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import { PdfContent } from './pdfService';
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY environment variable not set.");
-}
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const getApiKey = () => {
+    // Check various common env variable names used in local dev
+    return import.meta.env.VITE_GEMINI_API_KEY || 
+           (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
+};
+
+const initializeAI = () => {
+  const apiKey = getApiKey();
+  if (!apiKey) return null;
+  return new GoogleGenAI({ apiKey });
+};
 
 const generatePromptForPdfs = (
   questionPaperText: string,
@@ -138,9 +145,14 @@ export const evaluateAnswersFromPdfs = async (
     });
   }
 
+  const ai = initializeAI();
+  if (!ai) {
+    throw new Error("GEMINI_API_KEY is missing. Please add it to your .env file as VITE_GEMINI_API_KEY.");
+  }
+
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-preview-04-17',
+      model: 'gemini-1.5-flash', // Using a standard stable model
       contents: { parts: contentParts },
     });
     return response.text;

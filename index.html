@@ -1,38 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Answer Sheet Evaluator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              'primary': {
-                '50': '#eff6ff',
-                '100': '#dbeafe',
-                '200': '#bfdbfe',
-                '300': '#93c5fd',
-                '400': '#60a5fa',
-                '500': '#3b82f6',
-                '600': '#2563eb',
-                '700': '#1d4ed8',
-                '800': '#1e40af',
-                '900': '#1e3a8a',
-                '950': '#172554',
-              },
-            }
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Answer Sheet Evaluator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'primary': {
+              '50': '#eff6ff',
+              '100': '#dbeafe',
+              '200': '#bfdbfe',
+              '300': '#93c5fd',
+              '400': '#60a5fa',
+              '500': '#3b82f6',
+              '600': '#2563eb',
+              '700': '#1d4ed8',
+              '800': '#1e40af',
+              '900': '#1e3a8a',
+              '950': '#172554',
+            },
+          },
+          keyframes: {
+            'fade-in': { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            'slide-in-from-top': { '0%': { transform: 'translateY(-1rem)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+            'slide-in-from-bottom': { '0%': { transform: 'translateY(2rem)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+            'zoom-in': { '0%': { transform: 'scale(0.95)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+            'shake': { '0%, 100%': { transform: 'translateX(0)' }, '25%': { transform: 'translateX(-5px)' }, '75%': { transform: 'translateX(5px)' } }
+          },
+          animation: {
+            'in': 'fade-in 0.5s ease-out forwards',
+            'fade-in': 'fade-in 0.7s ease-out forwards',
+            'slide-in-from-top-4': 'slide-in-from-top 0.7s ease-out forwards',
+            'slide-in-from-bottom-8': 'slide-in-from-bottom 0.7s ease-out forwards',
+            'slide-in-from-bottom-12': 'slide-in-from-bottom 1s ease-out forwards',
+            'zoom-in': 'zoom-in 0.5s ease-out forwards',
+            'shake': 'shake 0.5s ease-in-out'
           }
         }
       }
-    </script>
+    }
+  </script>
   <script type="module" src="/index.tsx"></script>
 </head>
-  <body class="bg-slate-100 dark:bg-slate-900">
-    <div id="root"></div>
-  </body>
+
+<body class="bg-slate-100 dark:bg-slate-900">
+  <div id="root"></div>
+</body>
+
 </html>
