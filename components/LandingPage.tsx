@@ -53,7 +53,7 @@ export const LandingPage: React.FC = () => {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
                         </span>
-                        Powered by Gemini 1.5 Pro
+                        Next-Generation Academic Intelligence
                     </div>
 
                     <h1 className="text-6xl md:text-8xl font-black text-white tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
@@ -74,9 +74,6 @@ export const LandingPage: React.FC = () => {
                                 <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
                             </button>
                         </SignInButton>
-                        <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold text-lg hover:bg-white/10 transition-all">
-                            Watch Demo
-                        </button>
                     </div>
                 </div>
 
@@ -97,18 +94,6 @@ export const LandingPage: React.FC = () => {
                         title="Detailed Reports"
                         description="Generate professional PDF reports with itemized scoring, specific suggestions, and strengths analysis."
                     />
-                </div>
-
-                {/* Trust Section */}
-                <div className="mt-40 text-center animate-in fade-in duration-1000 delay-700">
-                    <p className="text-sm font-bold tracking-widest text-slate-500 uppercase mb-12">Trusted by modern institutions</p>
-                    <div className="flex flex-wrap justify-center items-center gap-12 grayscale opacity-40 hover:opacity-100 transition-opacity duration-500">
-                        {/* Placeholders for logos */}
-                        <span className="text-2xl font-bold text-white">Stanford</span>
-                        <span className="text-2xl font-bold text-white">MIT</span>
-                        <span className="text-2xl font-bold text-white">Harvard</span>
-                        <span className="text-2xl font-bold text-white">Oxford</span>
-                    </div>
                 </div>
             </div>
 
