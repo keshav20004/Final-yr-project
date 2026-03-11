@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
-import { evaluateAnswersFromPdfs } from './services/geminiService';
-import { extractTextAndImagesFromPdf } from './services/pdfService';
+import { evaluateAnswerSheets } from './services/geminiService';
 import EvaluationReport from './components/EvaluationReport';
 import { FileInput } from './components/FileInput';
 import { SparklesIcon } from './components/icons/SparklesIcon';
@@ -18,6 +17,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isDownloading, setIsLoadingDownloading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [progressStatus, setProgressStatus] = useState<string>('');
 
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -30,16 +30,14 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setEvaluationResult('');
+    setProgressStatus('Preparing PDFs...');
 
     try {
-      const questionPaperData = await extractTextAndImagesFromPdf(questionPaper);
-      const answerSheetData = await extractTextAndImagesFromPdf(answerSheet);
-      const modelAnswerData = modelAnswers ? await extractTextAndImagesFromPdf(modelAnswers) : undefined;
-
-      const result = await evaluateAnswersFromPdfs(
-        questionPaperData,
-        answerSheetData,
-        modelAnswerData
+      const result = await evaluateAnswerSheets(
+        questionPaper,
+        answerSheet,
+        modelAnswers || undefined,
+        (msg) => setProgressStatus(msg)
       );
       setEvaluationResult(result);
     } catch (e) {
@@ -50,6 +48,7 @@ const App: React.FC = () => {
       }
     } finally {
       setIsLoading(false);
+      setProgressStatus('');
     }
   }, [questionPaper, answerSheet, modelAnswers]);
 
@@ -169,7 +168,7 @@ const App: React.FC = () => {
                   {isLoading ? (
                     <>
                       <LoaderIcon className="animate-spin w-6 h-6" />
-                      <span>Evaluating...</span>
+                      <span>{progressStatus || 'Evaluating...'}</span>
                     </>
                   ) : (
                     <>

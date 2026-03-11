@@ -27,7 +27,7 @@ export const FileInput: React.FC<FileInputProps> = ({ label, file, onFileChange,
     event.preventDefault();
     const droppedFile = event.dataTransfer.files?.[0] || null;
     if (droppedFile && droppedFile.type === 'application/pdf') {
-       onFileChange(droppedFile);
+      onFileChange(droppedFile);
     }
   }, [onFileChange]);
 
@@ -60,7 +60,7 @@ export const FileInput: React.FC<FileInputProps> = ({ label, file, onFileChange,
           onDrop={handleDrop}
           className="relative flex flex-col items-center justify-center w-full p-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-900/70 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
         >
-          <div className="text-center" onClick={openFileDialog}>
+          <div className="text-center">
             <UploadIcon className="mx-auto h-8 w-8 text-slate-400 dark:text-slate-500" />
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               <span className="font-semibold text-primary-600 dark:text-primary-400">Click to upload</span> or drag and drop

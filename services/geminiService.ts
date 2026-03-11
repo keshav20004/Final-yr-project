@@ -1,11 +1,10 @@
 import { GoogleGenAI, Part } from "@google/genai";
-import { PdfContent } from './pdfService';
+import { fileToBase64 } from './pdfService';
 
 
 const getApiKey = () => {
-    // Check various common env variable names used in local dev
-    return import.meta.env.VITE_GEMINI_API_KEY || 
-           (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
+  return import.meta.env.VITE_GEMINI_API_KEY ||
+    (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
 };
 
 const initializeAI = () => {
@@ -14,22 +13,15 @@ const initializeAI = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-const generatePromptForPdfs = (
-  questionPaperText: string,
-  answerSheetText: string,
-  modelAnswerText?: string
-): string => {
-  return `You are a world-class AI answer sheet evaluator for university-level exams. Your primary task is to intelligently parse a question paper and a student's answer sheet, evaluate the answers, and generate a detailed report following strict scoring rules.
+const EVALUATION_PROMPT = `You are a world-class AI answer sheet evaluator for university-level exams. Your primary task is to intelligently parse a question paper and a student's answer sheet, evaluate the answers, and generate a detailed report following strict scoring rules.
 
 **CRITICAL INSTRUCTIONS:**
 
-**1. Multi-modal Analysis (Vision Enabled):**
-   - You will be provided with both extracted text and a series of page images for each document.
-   - The extracted text is for quick searching and matching. It may be imperfect.
-   - You **MUST** refer to the accompanying page images to evaluate visual content like diagrams, charts, graphs, mathematical equations, and handwriting.
-   - If the extracted text for a diagram is garbled or missing, use your vision capabilities to analyze the corresponding image from the student's answer sheet and grade it accurately. This is crucial for a fair evaluation.
+**1. Document Analysis (Vision Enabled):**
+   - You will receive the actual PDF documents directly. Use your vision capabilities to read ALL content including printed text, handwriting, diagrams, charts, graphs, mathematical equations, and tables.
+   - Read and interpret each page thoroughly.
 
-**2. Extract Marks from Question Paper**: You MUST extract the maximum marks for each question *directly from the question paper text*. Do not assume a uniform mark for all questions. Marks are often specified at the end of a question in formats like \`[10]\`, \`(10 marks)\`, or \`Marks: 10\`. This extracted mark is the denominator for the "Marks Awarded" field.
+**2. Extract Marks from Question Paper**: You MUST extract the maximum marks for each question *directly from the question paper*. Do not assume a uniform mark for all questions. Marks are often specified at the end of a question in formats like \`[10]\`, \`(10 marks)\`, or \`Marks: 10\`. This extracted mark is the denominator for the "Marks Awarded" field.
 
 **3. Handle Choices and Optional Questions (CRITICAL SCORING LOGIC)**:
     a.  **Section-level Choices (e.g., "Answer any 3 out of 5"):**
@@ -48,12 +40,12 @@ const generatePromptForPdfs = (
     c.  **Clear Reporting**: Your evaluation for each question must be independent, but your final \`Total Score\` calculation in the summary must strictly adhere to these choice rules.
 
 **4. Parse and Match**:
-    a.  Read the question paper text and identify all the questions, including any sub-parts.
-    b.  For each question, locate the corresponding answer in the student's answer sheet text. Students may answer out of order or miss questions. If an answer is not found, state that clearly.
+    a.  Read the question paper and identify all the questions, including any sub-parts.
+    b.  For each question, locate the corresponding answer in the student's answer sheet. Students may answer out of order or miss questions. If an answer is not found, state that clearly.
 
 **5. Evaluation**:
     a.  Evaluate the student's answer for correctness, depth, structure, and completeness.
-    b.  If model answer text is provided, use it as the gold standard. Otherwise, use your expert knowledge.
+    b.  If a model answer key is provided, use it as the gold standard. Otherwise, use your expert knowledge.
 
 **OUTPUT FORMATTING:**
 
@@ -64,7 +56,7 @@ const generatePromptForPdfs = (
 🔸 Question {question_number}:
 {full_question_text_from_paper}
 
-📝 Student’s Answer:
+📝 Student's Answer:
 {student's_full_answer_text_from_sheet OR "Answer not found in the sheet."}
 
 📌 Evaluation:
@@ -90,77 +82,69 @@ const generatePromptForPdfs = (
 
 **IMPORTANT - Total Score Calculation:** The \`total_max_marks_based_on_choices\` in the summary must be calculated based on the questions the student was *required* to attempt. For example, if the paper says "Answer any 5 questions" and each is worth 10 marks, the \`total_max_marks_based_on_choices\` is 50, NOT the total for all questions listed in the paper. The \`total_awarded_marks\` MUST only sum the scores of the questions that are counted according to the choice rules.
 
-Now, here is the data. Begin the evaluation.
-
-[START QUESTION PAPER TEXT]
-${questionPaperText}
-[END QUESTION PAPER TEXT]
-
-[START STUDENT ANSWER SHEET TEXT]
-${answerSheetText}
-[END STUDENT ANSWER SHEET TEXT]
-
-${modelAnswerText ? `
-[START MODEL ANSWER KEY TEXT]
-${modelAnswerText}
-[END MODEL ANSWER KEY TEXT]
-` : ''}
-
-You will also receive the images for each page of the documents after this prompt. Refer to them for visual content.
-`;
-};
+The documents are attached below. The FIRST PDF is the Question Paper, the SECOND PDF is the Student's Answer Sheet.`;
 
 
-export const evaluateAnswersFromPdfs = async (
-  questionPaperData: PdfContent,
-  answerSheetData: PdfContent,
-  modelAnswerData?: PdfContent
+/**
+ * Evaluates answer sheets by sending PDFs directly to Gemini.
+ * Gemini reads the PDFs natively — no client-side OCR needed.
+ */
+export const evaluateAnswerSheets = async (
+  questionPaperFile: File,
+  answerSheetFile: File,
+  modelAnswerFile?: File,
+  onProgress?: (message: string) => void
 ): Promise<string> => {
-  if (!questionPaperData.text || !answerSheetData.text) {
-    throw new Error("Question paper and answer sheet text cannot be empty.");
-  }
-  
-  const prompt = generatePromptForPdfs(
-    questionPaperData.text,
-    answerSheetData.text,
-    modelAnswerData?.text
-  );
-  
-  const contentParts: Part[] = [{ text: prompt }];
-
-  // Add question paper images
-  questionPaperData.images.forEach(img => {
-    contentParts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
-  });
-
-  // Add answer sheet images
-  answerSheetData.images.forEach(img => {
-    contentParts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
-  });
-
-  // Add model answer images if they exist
-  if (modelAnswerData) {
-    modelAnswerData.images.forEach(img => {
-      contentParts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
-    });
-  }
-
   const ai = initializeAI();
   if (!ai) {
     throw new Error("GEMINI_API_KEY is missing. Please add it to your .env file as VITE_GEMINI_API_KEY.");
   }
 
+  // Convert files to base64 for inline data
+  onProgress?.('Reading PDF files...');
+  const [qpBase64, asBase64] = await Promise.all([
+    fileToBase64(questionPaperFile),
+    fileToBase64(answerSheetFile),
+  ]);
+  const maBase64 = modelAnswerFile ? await fileToBase64(modelAnswerFile) : null;
+
+  // Build content parts: prompt + PDF files as inline data
+  let promptText = EVALUATION_PROMPT;
+  if (modelAnswerFile) {
+    promptText += '\nThe THIRD PDF is the Model Answer Key. Use it as the gold standard for grading.';
+  }
+
+  const contentParts: Part[] = [
+    { text: promptText },
+    // Question Paper PDF
+    { inlineData: { mimeType: 'application/pdf', data: qpBase64 } },
+    // Answer Sheet PDF
+    { inlineData: { mimeType: 'application/pdf', data: asBase64 } },
+  ];
+
+  // Add model answer if provided
+  if (maBase64) {
+    contentParts.push({ inlineData: { mimeType: 'application/pdf', data: maBase64 } });
+  }
+
+  onProgress?.('AI is evaluating your answer sheet...');
+  console.log(`[geminiService] Sending ${contentParts.length} parts to Gemini (QP: ${Math.round(qpBase64.length / 1024)}KB, AS: ${Math.round(asBase64.length / 1024)}KB)`);
+
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash', // Using a standard stable model
+      model: 'gemini-2.5-pro',
       contents: { parts: contentParts },
     });
     return response.text;
   } catch (error) {
     console.error("Error calling Gemini API:", error);
-    if (error instanceof Error && error.message.includes("API key not valid")) {
-        throw new Error("The configured API key is not valid. Please check your setup.");
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("API key not valid")) {
+      throw new Error("The configured API key is not valid. Please check your setup.");
     }
-    throw new Error("Failed to get a response from the AI. The model may be overloaded or the input is too large.");
+    if (errMsg.includes("too large") || errMsg.includes("payload") || errMsg.includes("413")) {
+      throw new Error("The PDF files are too large. Please try with smaller PDFs (under 10MB each).");
+    }
+    throw new Error(`AI evaluation failed: ${errMsg}`);
   }
 };
