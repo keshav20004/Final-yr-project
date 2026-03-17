@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
-import { evaluateAnswerSheets } from './services/geminiService';
+import { evaluateAnswerSheets } from './services/groqService';
 import EvaluationReport from './components/EvaluationReport';
 import { FileInput } from './components/FileInput';
 import { SparklesIcon } from './components/icons/SparklesIcon';
