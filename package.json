@@ -11,6 +11,8 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.61.1",
     "@google/genai": "^1.41.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "chart.js": "^4.5.1",
     "html2canvas": "1.4.1",
     "jspdf": "2.5.1",
@@ -18,7 +20,8 @@
     "pdfjs-dist": "^3.11.174",
     "react": "^19.1.0",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "three": "^0.183.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
