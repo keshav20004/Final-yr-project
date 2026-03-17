@@ -1,8 +1,10 @@
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { SignInButton } from '@clerk/clerk-react';
 import { SparklesIcon } from './icons/SparklesIcon';
 import HeroScene from './HeroScene';
+import CtaScene from './CtaScene';
+import Lenis from 'lenis';
 
 // ─── Feature Card ───
 const FeatureCard: React.FC<{
@@ -48,6 +50,28 @@ const StatCard: React.FC<{ value: string; label: string }> = ({ value, label }) 
 );
 
 export const LandingPage: React.FC = () => {
+    useEffect(() => {
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            orientation: 'vertical',
+            gestureOrientation: 'vertical',
+            smoothWheel: true,
+            wheelMultiplier: 1,
+            touchMultiplier: 2,
+        });
+
+        function raf(time: number) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        return () => {
+            lenis.destroy();
+        };
+    }, []);
+
     return (
         <div className="relative bg-black text-white overflow-hidden selection:bg-blue-500/30">
 
@@ -213,8 +237,17 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* ━━━ CTA SECTION ━━━ */}
-            <section className="relative z-10 py-32 px-6">
-                <div className="max-w-3xl mx-auto text-center">
+            <section className="relative z-10 py-32 px-6 overflow-hidden">
+                {/* Bottom 3D Scene */}
+                <div className="absolute inset-0 z-0 h-[150%] -top-1/4">
+                    <Suspense fallback={null}>
+                        <CtaScene />
+                    </Suspense>
+                    {/* Radial gradient mask to blend scene into the black background */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,black_80%)]" />
+                </div>
+
+                <div className="relative z-10 max-w-3xl mx-auto text-center">
                     <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-6">
                         Ready to see
                         <br />
