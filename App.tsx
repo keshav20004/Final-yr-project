@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import { evaluateAnswerSheets } from './services/groqService';
 import EvaluationReport from './components/EvaluationReport';
+import Dashboard from './components/Dashboard';
 import { FileInput } from './components/FileInput';
 import { SparklesIcon } from './components/icons/SparklesIcon';
 import { LoaderIcon } from './components/icons/LoaderIcon';
@@ -18,6 +19,7 @@ const App: React.FC = () => {
   const [isDownloading, setIsLoadingDownloading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [progressStatus, setProgressStatus] = useState<string>('');
+  const [showDashboard, setShowDashboard] = useState<boolean>(false);
 
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +32,7 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setEvaluationResult('');
+    setShowDashboard(false);
     setProgressStatus('Preparing PDFs...');
 
     try {
@@ -113,6 +116,41 @@ const App: React.FC = () => {
 
   const canEvaluate = questionPaper && answerSheet && !isLoading;
 
+  // ─── Dashboard Full-Page View ───
+  if (showDashboard && evaluationResult) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-800 dark:text-slate-200 font-sans">
+        {/* Dashboard Header */}
+        <header className="bg-white dark:bg-slate-800/80 shadow-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-sky-400 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg">📊</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">Evaluation Dashboard</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Detailed performance analysis</p>
+              </div>
+            </div>
+            <button
+              onClick={() => { setShowDashboard(false); window.scrollTo(0, 0); }}
+              className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold py-2.5 px-5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all active:scale-95"
+            >
+              <span>←</span>
+              <span>Back to Report</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Dashboard Content */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Dashboard report={evaluationResult} />
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Main Evaluator View ───
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-800 dark:text-slate-200 font-sans">
       <SignedOut>
@@ -190,22 +228,34 @@ const App: React.FC = () => {
                 <div className="mt-12 animate-in fade-in slide-in-from-bottom-8 duration-700 transition-all">
                   <div className="flex justify-between items-center mb-8">
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Evaluation Report</h2>
-                    <button
-                      onClick={handleDownloadPdf}
-                      disabled={isDownloading}
-                      className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold py-2.5 px-5 rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95"
-                    >
-                      {isDownloading ? (
-                        <LoaderIcon className="animate-spin w-5 h-5" />
-                      ) : (
-                        <DownloadIcon className="w-5 h-5" />
-                      )}
-                      <span>Download PDF</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleDownloadPdf}
+                        disabled={isDownloading}
+                        className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold py-2.5 px-5 rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95"
+                      >
+                        {isDownloading ? (
+                          <LoaderIcon className="animate-spin w-5 h-5" />
+                        ) : (
+                          <DownloadIcon className="w-5 h-5" />
+                        )}
+                        <span>Download PDF</span>
+                      </button>
+                    </div>
                   </div>
                   <div ref={reportRef} className="rounded-3xl overflow-hidden shadow-2xl">
                     <EvaluationReport report={evaluationResult} />
                   </div>
+
+                  {/* View Dashboard Button */}
+                  <button
+                    onClick={() => { setShowDashboard(true); window.scrollTo(0, 0); }}
+                    className="mt-8 w-full flex items-center justify-center gap-3 bg-gradient-to-r from-teal-500 to-sky-500 text-white font-bold py-4 px-6 rounded-2xl hover:from-teal-400 hover:to-sky-400 focus:outline-none focus:ring-4 focus:ring-teal-300 dark:focus:ring-teal-900 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-teal-500/20"
+                  >
+                    <span className="text-xl">📊</span>
+                    <span>View Evaluation Dashboard</span>
+                    <span>→</span>
+                  </button>
                 </div>
               )}
             </main>
