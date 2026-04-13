@@ -1,5 +1,5 @@
 
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { SignInButton } from '@clerk/clerk-react';
 import { SparklesIcon } from './icons/SparklesIcon';
 import HeroScene from './HeroScene';
@@ -50,27 +50,85 @@ const StatCard: React.FC<{ value: string; label: string }> = ({ value, label }) 
 );
 
 export const LandingPage: React.FC = () => {
+    const ctaSectionRef = useRef<HTMLElement | null>(null);
+    const [allowMotion, setAllowMotion] = useState(false);
+    const [showHeroScene, setShowHeroScene] = useState(false);
+    const [showCtaScene, setShowCtaScene] = useState(false);
+
     useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const mediaQueries = [
+            window.matchMedia('(prefers-reduced-motion: reduce)'),
+            window.matchMedia('(max-width: 768px)'),
+            window.matchMedia('(pointer: coarse)'),
+        ];
+
+        const updateMotionPreference = () => {
+            const shouldReduceMotion = mediaQueries.some((query) => query.matches);
+            setAllowMotion(!shouldReduceMotion);
+            setShowHeroScene(!shouldReduceMotion);
+        };
+
+        updateMotionPreference();
+        mediaQueries.forEach((query) => query.addEventListener('change', updateMotionPreference));
+
+        return () => {
+            mediaQueries.forEach((query) => query.removeEventListener('change', updateMotionPreference));
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!allowMotion || typeof window === 'undefined') {
+            return;
+        }
+
         const lenis = new Lenis({
-            duration: 1.2,
+            duration: 0.9,
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
             orientation: 'vertical',
             gestureOrientation: 'vertical',
             smoothWheel: true,
             wheelMultiplier: 1,
-            touchMultiplier: 2,
+            touchMultiplier: 1.1,
         });
 
+        let rafId = 0;
         function raf(time: number) {
             lenis.raf(time);
-            requestAnimationFrame(raf);
+            rafId = requestAnimationFrame(raf);
         }
-        requestAnimationFrame(raf);
+        rafId = requestAnimationFrame(raf);
 
         return () => {
+            cancelAnimationFrame(rafId);
             lenis.destroy();
         };
-    }, []);
+    }, [allowMotion]);
+
+    useEffect(() => {
+        if (!allowMotion || !ctaSectionRef.current || typeof window === 'undefined') {
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setShowCtaScene(true);
+                    observer.disconnect();
+                }
+            },
+            { rootMargin: '200px 0px' }
+        );
+
+        observer.observe(ctaSectionRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [allowMotion]);
 
     return (
         <div className="relative bg-black text-white overflow-hidden selection:bg-blue-500/30">
@@ -79,9 +137,11 @@ export const LandingPage: React.FC = () => {
             <section className="relative min-h-screen flex flex-col">
                 {/* 3D Background */}
                 <div className="absolute inset-0 z-0">
-                    <Suspense fallback={null}>
-                        <HeroScene />
-                    </Suspense>
+                    {showHeroScene && (
+                        <Suspense fallback={null}>
+                            <HeroScene />
+                        </Suspense>
+                    )}
                     {/* Dark overlay gradient for text readability */}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black" />
                 </div>
@@ -237,12 +297,14 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* ━━━ CTA SECTION ━━━ */}
-            <section className="relative z-10 py-32 px-6 overflow-hidden">
+            <section ref={ctaSectionRef} className="relative z-10 py-32 px-6 overflow-hidden">
                 {/* Bottom 3D Scene */}
                 <div className="absolute inset-0 z-0 h-[150%] -top-1/4">
-                    <Suspense fallback={null}>
-                        <CtaScene />
-                    </Suspense>
+                    {showCtaScene && (
+                        <Suspense fallback={null}>
+                            <CtaScene />
+                        </Suspense>
+                    )}
                     {/* Radial gradient mask to blend scene into the black background */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,black_80%)]" />
                 </div>

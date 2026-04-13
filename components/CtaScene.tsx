@@ -101,6 +101,8 @@ const CtaScene: React.FC = () => {
     return (
         <Canvas
             camera={{ position: [0, 0, 6], fov: 50 }}
+            dpr={[1, 1.5]}
+            frameloop="always"
             style={{
                 position: 'absolute',
                 top: 0,
@@ -109,7 +111,7 @@ const CtaScene: React.FC = () => {
                 height: '100%',
                 pointerEvents: 'none',
             }}
-            gl={{ antialias: true, alpha: true }}
+            gl={{ antialias: false, alpha: true, powerPreference: 'low-power' }}
         >
             <color attach="background" args={['#000000']} />
             <fog attach="fog" args={['#000000', 4, 20]} />

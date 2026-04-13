@@ -1,13 +1,13 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
-import { evaluateAnswerSheets } from './services/groqService';
-import EvaluationReport from './components/EvaluationReport';
-import Dashboard from './components/Dashboard';
-import { FileInput } from './components/FileInput';
-import { SparklesIcon } from './components/icons/SparklesIcon';
+import React, { Suspense, lazy, useState, useCallback, useRef } from 'react';
+import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import { LoaderIcon } from './components/icons/LoaderIcon';
 import { DownloadIcon } from './components/icons/DownloadIcon';
-import { LandingPage } from './components/LandingPage';
+
+const LandingPage = lazy(() =>
+  import('./components/LandingPage').then((module) => ({ default: module.LandingPage }))
+);
+const EvaluationReport = lazy(() => import('./components/EvaluationReport'));
+const Dashboard = lazy(() => import('./components/Dashboard'));
 
 const App: React.FC = () => {
   const [questionPaper, setQuestionPaper] = useState<File | null>(null);
@@ -36,6 +36,7 @@ const App: React.FC = () => {
     setProgressStatus('Preparing PDFs...');
 
     try {
+      const { evaluateAnswerSheets } = await import('./services/groqService');
       const result = await evaluateAnswerSheets(
         questionPaper,
         answerSheet,
@@ -120,7 +121,9 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-slate-800 selection:text-blue-200">
       <SignedOut>
-        <LandingPage />
+        <Suspense fallback={<div className="min-h-screen bg-black" />}>
+          <LandingPage />
+        </Suspense>
       </SignedOut>
 
       <SignedIn>
@@ -204,7 +207,9 @@ const App: React.FC = () => {
             <section className="lg:col-span-9 space-y-10">
               {showDashboard && evaluationResult ? (
                 <div className="bg-slate-900 border border-white/5 rounded-3xl p-6 lg:p-8 animate-in fade-in zoom-in duration-500">
-                  <Dashboard report={evaluationResult} />
+                  <Suspense fallback={<div className="min-h-[16rem] rounded-2xl bg-slate-950/60" />}>
+                    <Dashboard report={evaluationResult} />
+                  </Suspense>
                 </div>
               ) : (
                 <>
@@ -326,7 +331,9 @@ const App: React.FC = () => {
                           </div>
                         </div>
                         <div ref={reportRef} className="rounded-2xl overflow-hidden bg-slate-900 shadow-2xl">
-                          <EvaluationReport report={evaluationResult} />
+                          <Suspense fallback={<div className="min-h-[20rem] bg-slate-950/60" />}>
+                            <EvaluationReport report={evaluationResult} />
+                          </Suspense>
                         </div>
 
                         {/* View Dashboard Button */}
